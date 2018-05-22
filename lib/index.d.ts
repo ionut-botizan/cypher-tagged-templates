@@ -1,14 +1,18 @@
 import neo4j from 'neo4j-driver';
-export default class CypherHelper {
+export interface IHelperConfig {
     driver: neo4j.Driver;
-    constructor(driver: neo4j.Driver);
-    query: (strings: string[], ...params: any[]) => Query;
+    parseIntegers?: boolean;
 }
-export declare class Query {
-    protected driver: neo4j.Driver;
-    protected strings: string[];
+export default class CypherHelper {
+    config: IHelperConfig;
+    constructor(config: IHelperConfig);
+    query: (strings: TemplateStringsArray, ...params: any[]) => CypherQuery;
+}
+export declare class CypherQuery {
+    protected config: IHelperConfig;
+    protected strings: TemplateStringsArray;
     protected params: any[];
-    constructor(driver: neo4j.Driver, strings: string[], params?: any[]);
+    constructor(config: IHelperConfig, strings: TemplateStringsArray, params?: any[]);
     export(prefix?: string): [string, any];
-    run(): Promise<neo4j.StatementResult>;
+    run(): Promise<any[]>;
 }

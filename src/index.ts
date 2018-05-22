@@ -1,18 +1,30 @@
 import neo4j from 'neo4j-driver'
 
 
-export default class CypherHelper {
-	constructor(public driver: neo4j.Driver) {}
+export interface IHelperConfig {
+	driver: neo4j.Driver
+	parseIntegers?: boolean
+}
 
-	query = (strings: string[], ...params: any[]) => {
-		return new Query(this.driver, strings, params)
+export default class CypherHelper {
+	config: IHelperConfig = {
+		driver: null,
+		parseIntegers: false
+	}
+
+	constructor(config: IHelperConfig) {
+		this.config = {parseIntegers: false, ...config}
+	}
+
+	query = (strings: TemplateStringsArray, ...params: any[]) => {
+		return new CypherQuery(this.config, strings, params)
 	}
 }
 
-export class Query {
+export class CypherQuery {
 	constructor(
-		protected driver: neo4j.Driver,
-		protected strings: string[],
+		protected config: IHelperConfig,
+		protected strings: TemplateStringsArray,
 		protected params: any[] = [],
 	) {}
 
@@ -26,7 +38,7 @@ export class Query {
 
 			query += this.strings[i]
 
-			if (param instanceof Query) {
+			if (param instanceof CypherQuery) {
 				const [subQuery, subParams] = param.export(name)
 				query += subQuery
 				params = {...params, ...subParams}
@@ -42,14 +54,34 @@ export class Query {
 		]
 	}
 
-	async run(): Promise<neo4j.StatementResult> {
-		const session = this.driver.session()
+	async run(): Promise<any[]> {
+		const session = this.config.driver.session()
 		const [query, params] = this.export()
+		const result = await session.run(query, params)
+		let data = result.records.map(record => record.toObject())
 
-		return session.run(query, params).then(result => {
-			session.close()
+		if (this.config.parseIntegers) {
+			data = normalizeInts(data)
+		}
 
-			return result
-		})
+		session.close()
+
+		return data
 	}
+}
+
+function normalizeInts(record: any) {
+	let normalized = record
+
+	if (neo4j.isInt(record)) {
+		normalized = neo4j.integer.toNumber(record)
+	} else if (record instanceof Array) {
+		normalized = record.map(item => normalizeInts(item))
+	} else if (record instanceof Object) {
+		for (let key in record) {
+			normalized[key] = normalizeInts(record[key])
+		}
+	}
+
+	return normalized
 }
