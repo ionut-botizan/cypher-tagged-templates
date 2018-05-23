@@ -2,7 +2,7 @@ import neo4j from 'neo4j-driver'
 
 
 export interface IHelperConfig {
-	driver: neo4j.Driver
+	driver?: neo4j.Driver
 	parseIntegers?: boolean
 }
 
@@ -12,7 +12,7 @@ export default class CypherHelper {
 		parseIntegers: false
 	}
 
-	constructor(config: IHelperConfig) {
+	constructor(config: IHelperConfig = {}) {
 		this.config = {parseIntegers: false, ...config}
 	}
 
@@ -54,13 +54,14 @@ export class CypherQuery {
 		]
 	}
 
-	async run(): Promise<any[]> {
-		const session = this.config.driver.session()
+	async run(config: IHelperConfig = {}): Promise<any[]> {
+		const {driver, parseIntegers} = {...this.config, ...config}
+		const session = driver.session()
 		const [query, params] = this.export()
 		const result = await session.run(query, params)
 		let data = result.records.map(record => record.toObject())
 
-		if (this.config.parseIntegers) {
+		if (parseIntegers) {
 			data = normalizeInts(data)
 		}
 
