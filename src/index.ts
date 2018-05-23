@@ -16,7 +16,7 @@ export default class CypherHelper {
 		this.config = {parseIntegers: false, ...config}
 	}
 
-	query = (strings: TemplateStringsArray, ...params: any[]) => {
+	query = (strings: TemplateStringsArray, ...params: any[]): CypherQuery => {
 		return new CypherQuery(this.config, strings, params)
 	}
 }
@@ -54,12 +54,12 @@ export class CypherQuery {
 		]
 	}
 
-	async run(config: IHelperConfig = {}): Promise<any[]> {
+	async run<T extends Object = any>(config: IHelperConfig = {}): Promise<T[]> {
 		const {driver, parseIntegers} = {...this.config, ...config}
 		const session = driver.session()
 		const [query, params] = this.export()
 		const result = await session.run(query, params)
-		let data = result.records.map(record => record.toObject())
+		let data = result.records.map(record => record.toObject() as T)
 
 		if (parseIntegers) {
 			data = normalizeInts(data)
