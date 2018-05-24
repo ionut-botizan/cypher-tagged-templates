@@ -15,5 +15,5 @@ export declare class CypherQuery {
     protected params: any[];
     constructor(config: IHelperConfig, strings: TemplateStringsArray, params?: any[]);
     export(prefix?: string): [string, any];
-    run<T extends Object = any>(config?: IHelperConfig): Promise<T[] | neo4j.StatementResult>;
+    run<T extends Object = any>(config?: IHelperConfig): Promise<any>;
 }

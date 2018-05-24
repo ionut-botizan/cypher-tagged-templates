@@ -1,6 +1,6 @@
 {
   "name": "cypher-tagged-templates",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "description": "A tiny helper for writing and running Cypher queries using Javascript tagged templates",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
