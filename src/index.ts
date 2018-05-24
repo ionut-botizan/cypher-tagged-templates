@@ -56,7 +56,7 @@ export class CypherQuery {
 		]
 	}
 
-	async run<T extends Object = any>(config: IHelperConfig = {}): Promise<T[] | neo4j.StatementResult> {
+	async run<T extends Object = any>(config: IHelperConfig = {}): Promise<any> {
 		const {driver, parseIntegers, rawResults} = {...this.config, ...config}
 		const session = driver.session()
 		const [query, params] = this.export()
