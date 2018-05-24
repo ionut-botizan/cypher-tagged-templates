@@ -59,7 +59,7 @@ export class CypherQuery {
 		const session = driver.session()
 		const [query, params] = this.export()
 		const result = await session.run(query, params)
-		let data = result.records.map(record => record.toObject() as T)
+		let data = normalizeObjects(result.records)
 
 		if (parseIntegers) {
 			data = normalizeInts(data)
@@ -69,6 +69,28 @@ export class CypherQuery {
 
 		return data
 	}
+}
+
+function normalizeObjects(record: any) {
+	let normalized = record
+
+	if (record.toObject !== undefined) {
+		normalized = record.toObject()
+	}
+
+	if (record instanceof (neo4j.types.Node as any)) {
+		normalized = record.properties
+	}
+
+	if (normalized instanceof Array) {
+		normalized = normalized.map(item => normalizeObjects(item))
+	} else if (normalized instanceof Object) {
+		for (let key in normalized) {
+			normalized[key] = normalizeObjects(normalized[key])
+		}
+	}
+
+	return normalized
 }
 
 function normalizeInts(record: any) {
