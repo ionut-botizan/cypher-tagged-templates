@@ -2,6 +2,7 @@ import neo4j from 'neo4j-driver';
 export interface IHelperConfig {
     driver?: neo4j.Driver;
     parseIntegers?: boolean;
+    rawResults?: boolean;
 }
 export default class CypherHelper {
     config: IHelperConfig;
@@ -14,5 +15,5 @@ export declare class CypherQuery {
     protected params: any[];
     constructor(config: IHelperConfig, strings: TemplateStringsArray, params?: any[]);
     export(prefix?: string): [string, any];
-    run<T extends Object = any>(config?: IHelperConfig): Promise<T[]>;
+    run<T extends Object = any>(config?: IHelperConfig): Promise<T[] | neo4j.StatementResult>;
 }
