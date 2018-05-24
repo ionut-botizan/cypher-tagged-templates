@@ -104,7 +104,8 @@ function normalizeInts(record: any) {
 	let normalized = record
 
 	if (neo4j.isInt(record)) {
-		normalized = neo4j.integer.toNumber(record)
+		const i = neo4j.integer
+		normalized = i.inSafeRange(record) ? i.toNumber(record) : i.toString(record)
 	} else if (record instanceof Array) {
 		normalized = record.map(item => normalizeInts(item))
 	} else if (record instanceof Object) {
