@@ -79,6 +79,10 @@ export class CypherQuery {
 }
 
 function normalizeObjects(record: any) {
+	if (!(record instanceof Object)) {
+		return record
+	}
+
 	let normalized = record
 
 	if (record.toObject !== undefined) {
