@@ -6,7 +6,86 @@ export interface IHelperConfig {
 	rawResults?: boolean;
 }
 
+interface FromProps {
+	(propsWhitelist: [string], object: object): CypherQuery;
+}
+
+interface Raw {
+	(strings: TemplateStringsArray, ...params: any[]): CypherRawText;
+}
+
+interface Query {
+	(strings: TemplateStringsArray, ...params: any[]): CypherQuery;
+	raw: Raw;
+	fromProps: FromProps;
+}
+
+export class DangerousTextErr extends Error {}
+
 export default class CypherHelper {
+	query: Query = Object.assign(
+		(strings: TemplateStringsArray, ...params: any[]): CypherQuery => {
+			return new CypherQuery(this.config, strings, params);
+		},
+		{
+			/**
+			 *
+			 */
+			raw: (
+				strings: TemplateStringsArray,
+				...params: any[]
+			): CypherRawText => {
+				if (params.some(name => !/^\w+$/.test(name))) {
+					throw new DangerousTextErr(
+						"raw text can only have interpolated values that resolve to alphanumerics and/or underscores"
+					);
+				}
+				return new CypherRawText(
+					strings.reduce((accumulator, string, i, arr) => {
+						if (i === arr.length - 1) {
+							return accumulator + string;
+						} else {
+							return accumulator + string + params[i];
+						}
+					}, "")
+				);
+			},
+			/**
+			 * Plucks whitelisted keys and values and inserts them
+			 * as key value pairs seperated by commas, so that they
+			 * can be inserted into a Cypher query object.
+			 * @param propsWhitelist
+			 * an array of properties to whitelist from the `object`
+			 * @param object
+			 * object to be whitelisted
+			 *
+			 * @example
+			 *  cql`MATCH (m:Movie:NewRelease {${cql.fromProps(
+			 * 	["title", "release"],
+			 * 	{title: "Bee Movie", release: new Date().toString()}
+			 * )}}) RETURN m`
+			 */
+			fromProps: function(
+				propsWhitelist: [string],
+				object: object
+			): CypherQuery {
+				return this`${propsWhitelist
+					.map((prop: string, i: number, arr: [string]) => {
+						if (i === arr.length - 1) {
+							return [this.raw`${prop}: `, object[prop]];
+						} else {
+							return [
+								this.raw`${prop}: `,
+								object[prop],
+								this.raw`, `
+							];
+						}
+					})
+					.reduce((a, b) => a.concat(b), [])}`;
+			}
+		}
+	);
+
 	config: IHelperConfig = {
 		driver: null,
 		parseIntegers: false,
@@ -15,11 +94,22 @@ export default class CypherHelper {
 
 	constructor(config: IHelperConfig = {}) {
 		this.config = { parseIntegers: false, ...config };
+		this.query.bind(this);
+		this.query.fromProps.bind(this.query);
 	}
+}
 
-	query = (strings: TemplateStringsArray, ...params: any[]): CypherQuery => {
-		return new CypherQuery(this.config, strings, params);
-	};
+/**
+ * Don't export this they can use nested cypher``
+ * statements for static text or various helpers to get dynamic text
+ * like cypher.label, cypher.id, and cypher.prop.
+ */
+class CypherRawText {
+	text: string = "";
+
+	constructor(text: string) {
+		this.text = text;
+	}
 }
 
 export class CypherQuery {
@@ -39,14 +129,24 @@ export class CypherQuery {
 
 			query += this.strings[i];
 
-			if (param instanceof CypherQuery) {
-				const [subQuery, subParams] = param.export(name);
-				query += subQuery;
-				params = { ...params, ...subParams };
-			} else if (param !== undefined) {
-				query += `{${name}}`;
-				params[name] = param;
-			}
+			let done = false;
+			const acceptParam = (param, name) => {
+				if (param instanceof CypherQuery) {
+					const [subQuery, subParams] = param.export(name);
+					query += subQuery;
+					params = { ...params, ...subParams };
+				} else if (Array.isArray(param)) {
+					for (let j = 0; j < param.length; ++j) {
+						acceptParam(param[j], `${name}_${j}`);
+					}
+				} else if (param instanceof CypherRawText) {
+					query += `${param.text}`;
+				} else if (param !== undefined) {
+					query += `{${name}}`;
+					params[name] = param;
+				}
+			};
+			acceptParam(param, name);
 		}
 
 		return [query, params];
