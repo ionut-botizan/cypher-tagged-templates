@@ -1,7 +1,7 @@
 {
 	"compilerOptions": {
 		"experimentalDecorators": true,
-		"outDir": "./lib/",
+		"outDir": "./dist/",
 		"sourceMap": true,
 		"declaration": true,
 		"noImplicitAny": false,

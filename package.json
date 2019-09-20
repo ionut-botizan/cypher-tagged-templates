@@ -1,13 +1,18 @@
 {
   "name": "cypher-tagged-templates",
-  "version": "2.0.4",
+  "version": "3.0.0",
   "description": "A tiny helper for writing and running Cypher queries using Javascript tagged templates",
-  "main": "./lib/index.js",
-  "types": "./lib/index.d.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "rm -rf ./dist & tsc",
+    "prepare": "npm run build"
   },
-  "keywords": ["neo4j", "cypher", "cql"],
+  "keywords": [
+    "neo4j",
+    "cypher",
+    "cql"
+  ],
   "author": "Ionut Botizan <ionut.botizan@gmail.com>",
   "license": "MIT",
   "repository": {
@@ -15,9 +20,13 @@
     "url": "https://github.com/ionut-botizan/cypher-tagged-templates"
   },
   "bugs": {
-    "url" : "https://github.com/ionut-botizan/cypher-tagged-templates/issues"
+    "url": "https://github.com/ionut-botizan/cypher-tagged-templates/issues"
   },
-  "dependencies": {
+  "peerDependencies": {
     "neo4j-driver": "^1.6.1"
+  },
+  "devDependencies": {
+    "neo4j-driver": "^1.6.1",
+    "typescript": "^3.6.3"
   }
 }
