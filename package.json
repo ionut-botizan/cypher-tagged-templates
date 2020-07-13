@@ -1,6 +1,6 @@
 {
   "name": "cypher-tagged-templates",
-  "version": "3.0.0",
+  "version": "4.0.0",
   "description": "A tiny helper for writing and running Cypher queries using Javascript tagged templates",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -23,10 +23,10 @@
     "url": "https://github.com/ionut-botizan/cypher-tagged-templates/issues"
   },
   "peerDependencies": {
-    "neo4j-driver": "^1.6.1"
+    "neo4j-driver": "^4.1.0"
   },
   "devDependencies": {
-    "neo4j-driver": "^1.6.1",
-    "typescript": "^3.6.3"
+    "neo4j-driver": "^4.1.0",
+    "typescript": "^3.9.6"
   }
 }
